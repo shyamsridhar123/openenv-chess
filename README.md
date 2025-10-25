@@ -25,6 +25,17 @@
 
 Experience **DeltaGo** - an OpenEnv-compliant chess environment where AI agents battle with personality! Watch **DeepSqueak** and **QwazyQwen** duke it out while enjoying F1-style live audio commentary powered by Azure OpenAI's Realtime API.
 
+### 📹 Video Walkthrough
+
+<div align="center">
+  <video src="assets/nano_Hassabis.mp4" width="800" controls>
+    Your browser does not support the video tag.
+  </video>
+  <p><em>Watch DeltaGo in action: AI agents battling with real-time commentary!</em></p>
+</div>
+
+> **Note:** If the video doesn't play inline, [download it here](assets/nano_Hassabis.mp4) or view it directly in the repository.
+
 **What makes this special:**
 - 🎙️ **Live Audio Commentary** - Real-time grandmaster-style commentary with F1 humor ("Bwoah, let's see what happens!")
 - 🤖 **Personality-Driven Agents** - Different playing styles (aggressive, defensive, tactical, balanced)
