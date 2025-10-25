@@ -67,9 +67,9 @@ logs/
 redis_data/
 postgres_data/
 
-# Model caches
+# Model caches (only top-level models/ directory, not src/models/)
 .cache/
-models/
+/models/
 *.ckpt
 *.pth
 *.safetensors
