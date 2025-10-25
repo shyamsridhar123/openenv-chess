@@ -1,148 +1,53 @@
 <div align="center">
 
-# 🤖♟️ DeltaGo - OpenEnv Chess Battle
+# 🤖♟️ DeltaGo
 
-**Watch AI Agents Battle in Real-Time Chess with Live Audio Commentary**
+**AI Agents Play Chess with Live Audio Commentary**
 
-[![OpenEnv](https://img.shields.io/badge/OpenEnv-0.1-blue?style=for-the-badge)](https://openenv.dev)
-[![Python](https://img.shields.io/badge/Python-3.11+-green?style=for-the-badge&logo=python)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker)](https://docker.com)
-[![Hugging Face](https://img.shields.io/badge/🤗-smolagents-yellow?style=for-the-badge)](https://huggingface.co/docs/smolagents)
-[![Azure](https://img.shields.io/badge/Azure-OpenAI-0078D4?style=for-the-badge&logo=microsoft-azure)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-9%2F9%20Passing-brightgreen?style=for-the-badge)](tests/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://docker.com)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-FFD21E)](https://huggingface.co)
+[![Azure](https://img.shields.io/badge/Azure-OpenAI-0078D4?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-*DeepSqueak vs QwazyQwen - The ultimate AI chess showdown!*
-
-[🚀 Quick Start](#-quick-start) • [✨ Features](#-features) • [📚 Documentation](#-documentation) • [🎮 Live Demo](#-live-demo)
+[🚀 Quick Start](#-quick-start) • [📚 Docs](#-documentation) • [�️ Architecture](#️-architecture)
 
 </div>
 
 ---
 
-## 🎮 Live Demo
+## 🎮 Demo
 
-Experience **DeltaGo** - an OpenEnv-compliant chess environment where AI agents battle with personality! Watch **DeepSqueak** and **QwazyQwen** duke it out while enjoying F1-style live audio commentary powered by Azure OpenAI's Realtime API.
+https://github.com/user-attachments/assets/nano_Hassabis.mp4
 
-### 📹 Video Walkthrough
-
-<div align="center">
-  <video src="assets/nano_Hassabis.mp4" width="800" controls>
-    Your browser does not support the video tag.
-  </video>
-  <p><em>Watch DeltaGo in action: AI agents battling with real-time commentary!</em></p>
-</div>
-
-> **Note:** If the video doesn't play inline, [download it here](assets/nano_Hassabis.mp4) or view it directly in the repository.
-
-**What makes this special:**
-- 🎙️ **Live Audio Commentary** - Real-time grandmaster-style commentary with F1 humor ("Bwoah, let's see what happens!")
-- 🤖 **Personality-Driven Agents** - Different playing styles (aggressive, defensive, tactical, balanced)
-- ⚡ **Sub-second Response** - Fast API responses and real-time board updates
-- 🧪 **100% Test Coverage** - All 9 integration tests passing
-- 🐋 **Docker Ready** - One command deployment
+OpenEnv-compliant chess where **DeepSqueak** (Qwen/QwQ-32B) battles **QwazyQwen** (Qwen/Qwen2.5-72B) with F1-style live audio commentary.
 
 ## ✨ Features
 
-### Core Functionality
-- 🤖 **Multi-Agent Chess** - Two LLM-powered agents playing with different strategies
-- 📡 **OpenEnv 0.1 Compliant** - Full REST API implementation (`/reset`, `/step`, `/state`, `/render`)
-- 🎯 **Rule Enforcement** - FIDE-compliant chess rules via python-chess
-- 🔄 **State Management** - LRU cache with configurable game limits (up to 100 concurrent games)
-- 📊 **Game Statistics** - Real-time metrics and Prometheus endpoints
-
-### Audio Commentary System
-- 🎙️ **Real-Time Streaming** - Server-Sent Events (SSE) for audio delivery
-- 🗣️ **Azure OpenAI Realtime API** - High-quality text-to-speech with GPT-4o-realtime
-- 🎭 **Dynamic Commentary** - Context-aware analysis based on position evaluation
-- 🏁 **F1-Style Excitement** - "Bwoah, let's see what happens!" and racing references
-- ⚙️ **Configurable Triggers** - Commentary on blunders, brilliant moves, and key moments
-
-### Web Interface
-- 🎨 **Modern UI** - Clean, responsive design with "DeltaGo" branding
-- ♟️ **Interactive Board** - Real-time SVG chess board visualization
-- 🎵 **Audio Playback** - Automatic commentary streaming and playback
-- ⏯️ **Game Controls** - Start, stop, and reset games with one click
-- 📈 **Live Stats** - Active games, move count, and system health
-
-### Developer Experience
-- 🧪 **Comprehensive Tests** - 67 total tests (9 integration, 58 unit)
-- 📝 **Full Documentation** - API specs, architecture diagrams, deployment guides
-- � **Docker Compose** - One-command deployment with health checks
-- 🔧 **Environment Config** - Template `.env.example` with all variables
-- ⚡ **Fast Development** - `uv` for 10-100x faster dependency management
+- 🤖 **Dual AI Agents** - LLM-powered players with distinct personalities
+- 🎙️ **Live Audio Commentary** - F1-style real-time analysis via Azure OpenAI
+- 📡 **OpenEnv 0.1 Compliant** - Full REST API (`/reset`, `/step`, `/state`, `/render`)
+- ♟️ **FIDE Rules** - python-chess for legal move validation
+- 🎨 **Modern Web UI** - Interactive SVG board with live updates
+- 🐋 **Docker Ready** - One-command deployment
+- 🧪 **Tested** - 9/9 integration tests passing
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- **Docker Desktop** (with Docker Compose)
-- **Python 3.11+** (for local development)
-- **Hugging Face Token** - [Get yours here](https://huggingface.co/settings/tokens)
-- **Azure OpenAI Access** (optional, for audio commentary)
-
-### 🐋 Docker Installation (Recommended)
-
 ```bash
-# 1. Clone the repository
+# Clone and setup
 git clone https://github.com/shyamsridhar123/openenv-chess.git
 cd openenv-chess
-
-# 2. Copy environment template and add your tokens
 cp .env.example .env
-# Edit .env and add your HUGGINGFACE_TOKEN and Azure OpenAI credentials
+# Add your HUGGINGFACE_TOKEN and Azure OpenAI credentials to .env
 
-# 3. Start with Docker Compose
+# Run with Docker
 docker-compose up --build -d
-
-# 4. Check health
-curl http://localhost:8000/health
 ```
 
-**Access the application:**
-- 🌐 **Web UI**: http://localhost:8000
-- 📡 **API Docs**: http://localhost:8000/docs
-- 📊 **Metrics**: http://localhost:8000/api/v1/metrics
-
-### 💻 Local Development Installation
-
-```bash
-# 1. Install uv (ultra-fast Python package manager)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# 2. Setup environment
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# 3. Install dependencies
-uv pip install -e ".[dev]"
-
-# 4. Configure environment
-cp .env.example .env
-# Edit .env with your tokens
-
-# 5. Run the server
-uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 🎮 Play Your First Game
-
-1. Open http://localhost:8000 in your browser
-2. See **DeepSqueak** vs **QwazyQwen** as default players
-3. Click **"Start New Game"**
-4. Watch the AI agents play with live audio commentary!
-5. Use **Stop** button to end the game anytime
-
-### Access the Demo
-
-Open your browser to: **http://localhost:3000**
-
-- **Chess Environment API**: http://localhost:8000
-- **Game Manager**: http://localhost:8001
-- **Web Interface**: http://localhost:3000
-
-Click "Start New Game" and watch the agents play!
+**Access:** http://localhost:8000  
+**API Docs:** http://localhost:8000/docs
 
 ## 📚 Documentation
 
@@ -402,21 +307,6 @@ We welcome contributions in these areas:
 - 🔊 **Commentary Styles** - Add commentary personality variants
 - 🌐 **Internationalization** - Add language support
 - ⚡ **Performance** - Optimize LLM inference, caching strategies
-
-## 🔐 Environment Configuration
-```
-
-### Common Commands
-
-```bash
-make help              # Show all available commands
-make docker-up         # Start all containers
-make docker-logs       # View container logs
-make test              # Run test suite with coverage
-make ci                # Run CI checks (format, lint, test)
-```
-
-
 
 ## 🔐 Environment Configuration
 
