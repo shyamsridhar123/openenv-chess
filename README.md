@@ -19,7 +19,7 @@
 
 ## 🎮 Demo
 
-https://github.com/user-attachments/assets/nano_Hassabis.mp4
+https://github.com/shyamsridhar123/openenv-chess/assets/nano_Hassabis.mp4
 
 OpenEnv-compliant chess where **DeepSqueak** (Qwen/QwQ-32B) battles **QwazyQwen** (Qwen/Qwen2.5-72B) with F1-style live audio commentary.
 
