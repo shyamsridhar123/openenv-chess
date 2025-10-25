@@ -1,0 +1,38 @@
+services:
+  chess-env:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chess-openenv
+    ports:
+      - "8000:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - MAX_CONCURRENT_GAMES=${MAX_CONCURRENT_GAMES:-100}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080,http://localhost:8000}
+      - HF_TOKEN=${HUGGINGFACE_TOKEN:-}
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-}
+      - AZURE_OPENAI_DEPLOYMENT_NAME=${AZURE_OPENAI_DEPLOYMENT_NAME:-}
+      - AZURE_OPENAI_AUDIO_DEPLOYMENT_NAME=${AZURE_OPENAI_AUDIO_DEPLOYMENT_NAME:-}
+      - COMMENTARY_ENABLED=${COMMENTARY_ENABLED:-true}
+      - RELOAD=false
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - chess-network
+
+networks:
+  chess-network:
+    driver: bridge

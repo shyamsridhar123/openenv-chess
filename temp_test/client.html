@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure OpenAI Realtime Audio Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .status {
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .output-section {
+            margin-top: 30px;
+        }
+        
+        .output-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .output-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        
+        .wave-animation {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            height: 50px;
+            margin: 20px 0;
+        }
+        
+        .wave-animation.active {
+            display: flex;
+        }
+        
+        .wave-bar {
+            width: 4px;
+            height: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+            animation: wave 1s ease-in-out infinite;
+        }
+        
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        
+        @keyframes wave {
+            0%, 100% { height: 10px; }
+            50% { height: 40px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Azure OpenAI Realtime Audio</h1>
+        <p class="subtitle">Powered by GPT-Realtime-Mini</p>
+        
+        <div id="status" class="status disconnected">Disconnected</div>
+        
+        <div class="input-group">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Type your message here..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+        </div>
+        
+        <div class="wave-animation" id="waveAnimation">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+        </div>
+        
+        <div class="output-section">
+            <label class="output-label">📝 Text Response:</label>
+            <div class="output-box" id="textOutput">Waiting for response...</div>
+            
+            <label class="output-label">🎵 Audio Transcript:</label>
+            <div class="output-box" id="transcriptOutput">Waiting for transcript...</div>
+        </div>
+        
+        <div class="audio-controls">
+            <div class="volume-control">
+                <span>🔊 Volume:</span>
+                <input type="range" id="volumeControl" min="0" max="100" value="80" oninput="updateVolume(this.value)">
+                <span id="volumeLabel">80%</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let audioContext = null;
+        let audioQueue = [];
+        let isPlaying = false;
+        let nextStartTime = 0;
+        let volume = 0.8;
+        
+        // Initialize WebSocket connection
+        function connect() {
+            ws = new WebSocket('ws://localhost:8001/ws');
+            
+            ws.onopen = () => {
+                console.log('Connected to server');
+                updateStatus('connected', 'Connected');
+                document.getElementById('sendBtn').disabled = false;
+            };
+            
+            ws.onmessage = async (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'text_delta') {
+                    appendText('textOutput', data.content);
+                } else if (data.type === 'audio_delta') {
+                    await playAudioChunk(data.content);
+                } else if (data.type === 'transcript_delta') {
+                    appendText('transcriptOutput', data.content);
+                } else if (data.type === 'done') {
+                    updateStatus('connected', 'Connected - Response complete');
+                    hideWaveAnimation();
+                } else if (data.type === 'error') {
+                    console.error('Error:', data.content);
+                    updateStatus('disconnected', 'Error: ' + data.content);
+                    hideWaveAnimation();
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateStatus('disconnected', 'Connection error');
+            };
+            
+            ws.onclose = () => {
+                console.log('Disconnected from server');
+                updateStatus('disconnected', 'Disconnected');
+                document.getElementById('sendBtn').disabled = true;
+                hideWaveAnimation();
+                
+                // Attempt to reconnect after 3 seconds
+                setTimeout(connect, 3000);
+            };
+        }
+        
+        // Initialize Audio Context
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        // Play audio chunk
+        async function playAudioChunk(base64Audio) {
+            initAudioContext();
+            showWaveAnimation();
+            
+            try {
+                // Decode base64 to array buffer
+                const binaryString = atob(base64Audio);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                // Azure Realtime API sends PCM16 at 24kHz mono
+                const sampleRate = 24000;
+                const numChannels = 1;
+                
+                // Convert bytes to Int16Array (PCM16)
+                const pcm16 = new Int16Array(bytes.buffer);
+                const numSamples = pcm16.length;
+                
+                // Create audio buffer
+                const audioBuffer = audioContext.createBuffer(numChannels, numSamples, sampleRate);
+                const channelData = audioBuffer.getChannelData(0);
+                
+                // Convert PCM16 to float32 (-1.0 to 1.0)
+                for (let i = 0; i < numSamples; i++) {
+                    channelData[i] = pcm16[i] / 32768.0;
+                }
+                
+                // Create source and gain node for volume control
+                const source = audioContext.createBufferSource();
+                const gainNode = audioContext.createGain();
+                
+                source.buffer = audioBuffer;
+                gainNode.gain.value = volume;
+                
+                source.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Schedule playback to continue seamlessly
+                const currentTime = audioContext.currentTime;
+                const startTime = Math.max(currentTime, nextStartTime);
+                
+                source.start(startTime);
+                
+                // Update next start time
+                nextStartTime = startTime + audioBuffer.duration;
+                
+            } catch (error) {
+                console.error('Error playing audio:', error);
+            }
+        }
+        
+        // Send message
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message && ws && ws.readyState === WebSocket.OPEN) {
+                // Clear outputs and reset audio timing
+                document.getElementById('textOutput').textContent = '';
+                document.getElementById('transcriptOutput').textContent = '';
+                nextStartTime = 0;
+                
+                // Send message
+                ws.send(JSON.stringify({
+                    type: 'user_message',
+                    content: message
+                }));
+                
+                updateStatus('processing', 'Processing...');
+                input.value = '';
+            }
+        }
+        
+        // Handle Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        // Update status display
+        function updateStatus(statusClass, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${statusClass}`;
+            statusEl.textContent = message;
+        }
+        
+        // Append text to output
+        function appendText(elementId, text) {
+            const element = document.getElementById(elementId);
+            element.textContent += text;
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        // Update volume
+        function updateVolume(value) {
+            volume = value / 100;
+            document.getElementById('volumeLabel').textContent = value + '%';
+        }
+        
+        // Show wave animation
+        function showWaveAnimation() {
+            document.getElementById('waveAnimation').classList.add('active');
+        }
+        
+        // Hide wave animation
+        function hideWaveAnimation() {
+            document.getElementById('waveAnimation').classList.remove('active');
+        }
+        
+        // Connect on page load
+        window.addEventListener('load', connect);
+    </script>
+</body>
+</html>

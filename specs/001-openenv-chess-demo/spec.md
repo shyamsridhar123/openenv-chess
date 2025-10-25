@@ -87,6 +87,24 @@ An ML engineer wants to create and test their own chess agent with custom strate
 
 ---
 
+### User Story 4.5 - Hugging Face Hub Integration (Priority: P4.5)
+
+An ML researcher wants to share custom chess agents and environment configurations on Hugging Face Hub so the community can discover, use, and build upon their work.
+
+**Why this priority**: Enables community sharing and collaboration. Critical for fostering an ecosystem around OpenEnv chess agents and making custom configurations discoverable.
+
+**Independent Test**: Can be tested by publishing an environment to Hub, loading it in a new session, and verifying all functionality works via roundtrip save/load.
+
+**Acceptance Scenarios**:
+
+1. **Given** a custom environment configuration, **When** developer calls `save_pretrained()`, **Then** configuration is serialized to disk
+2. **Given** a serialized environment, **When** developer calls `push_to_hub()`, **Then** it's published to Hugging Face Hub with proper metadata
+3. **Given** a Hub repository ID, **When** developer calls `from_pretrained()`, **Then** environment loads with identical functionality
+4. **Given** custom agent configurations, **When** developer publishes via `Agent.push_to_hub()`, **Then** agents are discoverable on Hub
+5. **Given** a Hub agent repository, **When** developer loads via `Agent.from_hub()`, **Then** agent configuration works identically to original
+
+---
+
 ### User Story 5 - Research Performance Analysis (Priority: P5)
 
 A researcher wants to track agent performance metrics and export game data to evaluate different agent configurations and publish findings.
@@ -110,9 +128,9 @@ A researcher wants to track agent performance metrics and export game data to ev
 - When an agent returns an illegal move, system retries up to 3 times with error feedback, then uses random legal move
 - When WebSocket connection drops, game continues server-side while client auto-reconnects and syncs to current state
 - When multiple games requested simultaneously, system queues requests and processes sequentially with status feedback
-- What happens when users try to start a game before the previous one completes?
-- How does the system handle agents that produce no reasoning output?
-- What happens when browser window is resized during an animated move?
+- When users try to start a game before the previous one completes, the new request is queued (covered by FR-044)
+- When agents produce no reasoning output, system displays default status message "Agent thinking..."
+- When browser window is resized during an animated move, CSS transitions adapt gracefully without interruption
 
 ## Requirements *(mandatory)*
 
@@ -131,7 +149,7 @@ A researcher wants to track agent performance metrics and export game data to ev
 - **FR-006**: System MUST coordinate turn-taking between two agents automatically
 - **FR-007**: System MUST send board state and legal moves to agents before each turn
 - **FR-008**: Agents MUST respond with moves in standard chess notation
-- **FR-009**: System MUST enforce move timeouts (reasonable default of 30 seconds)
+- **FR-009**: System MUST enforce 30-second move timeout for agent decisions
 - **FR-010**: System MUST handle agent failures gracefully without crashing the game
 - **FR-034**: System MUST retry up to 3 times when an agent returns an illegal move, providing error feedback
 - **FR-035**: System MUST automatically select a random legal move if agent fails after 3 retry attempts
@@ -171,7 +189,7 @@ A researcher wants to track agent performance metrics and export game data to ev
 
 - **FR-026**: System MUST complete game resets in under 1 second
 - **FR-027**: System MUST validate moves in under 100 milliseconds
-- **FR-028**: System MUST support at least 10 simultaneous games
+- **FR-028**: System MUST support 10-20 concurrent games with maximum limit of 100 games (with LRU cleanup)
 - **FR-029**: Games MUST complete without crashes 95% of the time or more
 - **FR-030**: System MUST maintain game state consistency throughout gameplay
 - **FR-040**: System MUST continue game execution server-side when WebSocket connection drops
@@ -181,6 +199,15 @@ A researcher wants to track agent performance metrics and export game data to ev
 - **FR-044**: System MUST queue simultaneous game start requests and process them sequentially
 - **FR-045**: System MUST provide status feedback to clients while requests are queued (e.g., "Starting game...")
 - **FR-046**: System MUST enforce maximum concurrent game limit and reject requests beyond capacity with clear error message
+
+**Audio Commentary (Enhancement Layer):**
+
+- **FR-047**: System SHOULD provide real-time audio commentary for game moves using Azure OpenAI Realtime API
+- **FR-048**: Commentary system MUST support introduction sequences before games start
+- **FR-049**: Commentary system MUST allow users to enable/disable audio during gameplay
+- **FR-050**: Commentary system MUST stream audio progressively using Server-Sent Events (SSE) to minimize latency
+
+**Justification**: Audio commentary is an enhancement feature that significantly improves educational value and engagement without blocking core OpenEnv functionality. It operates in a separate layer (HTTP SSE) from the core OpenEnv REST API, maintaining architectural separation. While it adds deployment complexity (Azure API key required), it's optional and the system functions fully without it.
 
 ### Key Entities
 
@@ -212,7 +239,7 @@ A researcher wants to track agent performance metrics and export game data to ev
 
 - **SC-009**: Games complete successfully 95% of the time without errors or crashes
 - **SC-010**: Users see move updates in under 2 seconds after agent decisions
-- **SC-011**: System handles 10+ concurrent games without performance degradation
+- **SC-011**: System handles 10-20 concurrent games without performance degradation
 - **SC-012**: Board animations appear smooth and responsive on standard hardware
 
 **Community & Impact:**

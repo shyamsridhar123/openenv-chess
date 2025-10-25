@@ -28,7 +28,6 @@ ENV/
 env/
 
 # uv
-uv.lock
 .python-version
 
 # IDEs
@@ -67,3 +66,14 @@ logs/
 # Project Specific
 redis_data/
 postgres_data/
+
+# Model caches
+.cache/
+models/
+*.ckpt
+*.pth
+*.safetensors
+
+# Coverage reports
+coverage.xml
+.coverage.*

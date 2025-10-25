@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeltaGo - AI Chess Battle</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 DeltaGo</h1>
+            <p>Chess OpenEnv: Watch AI Agents Battle</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2>Game Controls</h2>
+                
+                <div class="form-group">
+                    <label for="whiteAgent">White Agent</label>
+                    <input type="text" id="whiteAgent" value="DeepSqueak" placeholder="Agent ID">
+                    <select id="whitePersonality">
+                        <option value="aggressive">Aggressive</option>
+                        <option value="defensive">Defensive</option>
+                        <option value="balanced" selected>Balanced</option>
+                        <option value="tactical">Tactical</option>
+                        <option value="positional">Positional</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="blackAgent">Black Agent</label>
+                    <input type="text" id="blackAgent" value="QwazyQwen" placeholder="Agent ID">
+                    <select id="blackPersonality">
+                        <option value="aggressive">Aggressive</option>
+                        <option value="defensive" selected>Defensive</option>
+                        <option value="balanced">Balanced</option>
+                        <option value="tactical">Tactical</option>
+                        <option value="positional">Positional</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxMoves">Max Moves</label>
+                    <input type="number" id="maxMoves" value="50" min="5" max="200">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="useLLM" checked>
+                        Use LLM Agents (unchecked = random moves)
+                    </label>
+                </div>
+
+                <div class="button-group">
+                    <button id="startGame" class="btn btn-primary">Start New Game</button>
+                    <button id="stopGame" class="btn btn-danger" disabled>Stop Game</button>
+                </div>
+
+                <div class="status-panel">
+                    <h3>Game Status</h3>
+                    <div id="gameStatus">
+                        <p><strong>Status:</strong> <span id="statusText">Not started</span></p>
+                        <p><strong>Game ID:</strong> <span id="gameId">-</span></p>
+                        <p><strong>Current Turn:</strong> <span id="currentTurn">-</span></p>
+                        <p><strong>Move Count:</strong> <span id="moveCount">0</span></p>
+                        <p><strong>Last Move:</strong> <span id="lastMove">-</span></p>
+                    </div>
+                </div>
+
+                <div class="stats-panel">
+                    <h3>Server Stats</h3>
+                    <div id="serverStats">
+                        <p><strong>Total Games:</strong> <span id="totalGames">-</span></p>
+                        <p><strong>Active Games:</strong> <span id="activeGames">-</span></p>
+                    </div>
+                </div>
+
+                <div class="commentary-panel">
+                    <h3>🎙️ Audio Commentary</h3>
+                    <div class="commentary-controls">
+                        <button id="toggleCommentary" class="btn btn-primary">Enable Commentary</button>
+                        <div class="commentary-status">
+                            <strong>Status:</strong> <span id="commentaryStatus" class="status-stopped">Disabled</span>
+                        </div>
+                    </div>
+                    <div class="commentary-transcript">
+                        <strong>Transcript:</strong>
+                        <div id="commentaryTranscript" class="transcript-text">No commentary yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chess Board Display -->
+            <div class="board-container">
+                <h2>Chess Board</h2>
+                <div id="chessBoard" class="chess-board">
+                    <!-- Board will be rendered here -->
+                </div>
+                <div class="board-info">
+                    <p id="boardFen"></p>
+                </div>
+            </div>
+
+            <!-- Move History -->
+            <div class="history-panel">
+                <h2>Move History</h2>
+                <div id="moveHistory" class="move-list">
+                    <!-- Moves will appear here -->
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built with OpenEnv 0.1 • smolagents • FastAPI</p>
+            <p><a href="/docs" target="_blank">API Docs</a> | <a href="/health" target="_blank">Health Check</a></p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js?v=5"></script>
+</body>
+</html>
