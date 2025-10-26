@@ -14,6 +14,7 @@ import structlog
 from pathlib import Path
 import subprocess
 import os
+from dataclasses import dataclass
 
 logger = structlog.get_logger()
 
@@ -24,8 +25,8 @@ class StockfishEvaluator:
     def __init__(
         self,
         stockfish_path: Optional[str] = None,
-        depth: int = 15,
-        time_limit: float = 0.1,
+        depth: int = 20,
+        time_limit: float = 0.5,
     ):
         """Initialize Stockfish evaluator.
         
@@ -38,6 +39,8 @@ class StockfishEvaluator:
         self.depth = depth
         self.time_limit = time_limit
         self.engine: Optional[chess.engine.SimpleEngine] = None
+        # Game-scoped position cache: {game_id: {fen: result}}
+        self._position_cache: Dict[str, Dict[str, Any]] = {}
         
         if self.stockfish_path:
             try:
@@ -181,8 +184,9 @@ class StockfishEvaluator:
             # Evaluate position before move
             eval_before = self.evaluate_position(board)
             
-            # Get Stockfish's best move
-            best_move = self.get_best_move(board)
+            # Get Stockfish's top moves with PV lines
+            top_moves = self.get_top_moves(board, num_moves=3)
+            best_move = top_moves[0][0] if top_moves else None
             is_best = (best_move == move) if best_move else False
             
             # Make the move and evaluate after
@@ -217,6 +221,7 @@ class StockfishEvaluator:
                 "eval_before": eval_before,
                 "eval_after": eval_after,
                 "quality": quality,
+                "top_moves": top_moves,  # Include top moves with PV lines for commentary
             }
             
         except Exception as e:
@@ -234,19 +239,29 @@ class StockfishEvaluator:
     def get_top_moves(
         self,
         board: chess.Board,
-        num_moves: int = 3,
-    ) -> List[Tuple[chess.Move, int]]:
-        """Get top N moves with evaluations.
+        num_moves: int = 5,
+        game_id: Optional[str] = None,
+    ) -> List[Tuple[chess.Move, int, List[chess.Move]]]:
+        """Get top N moves with evaluations and PV lines.
         
         Args:
             board: Chess board position
-            num_moves: Number of top moves to return
+            num_moves: Number of top moves to return (default 5)
+            game_id: Optional game ID for caching results
             
         Returns:
-            List of (move, centipawn_eval) tuples
+            List of (move, centipawn_eval, pv_line) tuples where pv_line is the continuation
         """
         if not self.is_available():
             return []
+        
+        # Check cache if game_id provided
+        if game_id:
+            fen = board.fen()
+            cached = self._get_cached_position(game_id, fen)
+            if cached is not None:
+                logger.debug("position_cache_hit", game_id=game_id, fen=fen)
+                return cached
         
         try:
             info = self.engine.analyse(
@@ -255,23 +270,79 @@ class StockfishEvaluator:
                 multipv=num_moves
             )
             
-            # Extract moves and scores
+            # Extract moves, scores, and PV lines
             top_moves = []
             if isinstance(info, list):
                 for pv_info in info:
                     pv = pv_info.get("pv", [])
-                    if pv:
+                    if pv and len(pv) > 0:
                         move = pv[0]
+                        pv_line = pv[1:] if len(pv) > 1 else []  # Continuation after the move
+                        
                         score = pv_info.get("score")
                         if score:
-                            cp = score.white().score() or 0
-                            top_moves.append((move, cp))
+                            cp_score = score.white()
+                            # Handle mate scores
+                            if cp_score.is_mate():
+                                mate_in = cp_score.mate()
+                                cp = 10000 if mate_in > 0 else -10000
+                            else:
+                                cp = cp_score.score() or 0
+                            
+                            top_moves.append((move, cp, pv_line))
+            
+            # Cache result if game_id provided
+            if game_id and top_moves:
+                self._cache_position(game_id, board.fen(), top_moves)
             
             return top_moves
             
         except Exception as e:
             logger.error("top_moves_failed", error=str(e))
             return []
+    
+    def _get_cached_position(
+        self, game_id: str, fen: str
+    ) -> Optional[List[Tuple[chess.Move, int, List[chess.Move]]]]:
+        """Get cached position evaluation.
+        
+        Args:
+            game_id: Game identifier
+            fen: Position FEN string
+            
+        Returns:
+            Cached result or None
+        """
+        game_cache = self._position_cache.get(game_id)
+        if game_cache:
+            return game_cache.get(fen)
+        return None
+    
+    def _cache_position(
+        self, game_id: str, fen: str, result: List[Tuple[chess.Move, int, List[chess.Move]]]
+    ) -> None:
+        """Cache position evaluation result.
+        
+        Args:
+            game_id: Game identifier
+            fen: Position FEN string
+            result: Evaluation result to cache
+        """
+        if game_id not in self._position_cache:
+            self._position_cache[game_id] = {}
+        self._position_cache[game_id][fen] = result
+        logger.debug("position_cached", game_id=game_id, fen=fen)
+    
+    def clear_game_cache(self, game_id: str) -> None:
+        """Clear cache for a specific game.
+        
+        Args:
+            game_id: Game identifier to clear cache for
+        """
+        if game_id in self._position_cache:
+            cache_size = len(self._position_cache[game_id])
+            del self._position_cache[game_id]
+            logger.info("game_cache_cleared", game_id=game_id, positions_cleared=cache_size)
     
     def close(self):
         """Close the Stockfish engine."""
@@ -283,6 +354,8 @@ class StockfishEvaluator:
                 logger.warning("stockfish_close_error", error=str(e))
             finally:
                 self.engine = None
+        # Clear all caches
+        self._position_cache.clear()
     
     def __enter__(self):
         """Context manager entry."""

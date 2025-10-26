@@ -22,9 +22,9 @@
                     <label for="whiteAgent">White Agent</label>
                     <input type="text" id="whiteAgent" value="DeepSqueak" placeholder="Agent ID">
                     <select id="whitePersonality">
-                        <option value="aggressive">Aggressive</option>
+                        <option value="aggressive" selected>Aggressive</option>
                         <option value="defensive">Defensive</option>
-                        <option value="balanced" selected>Balanced</option>
+                        <option value="balanced">Balanced</option>
                         <option value="tactical">Tactical</option>
                         <option value="positional">Positional</option>
                     </select>
@@ -35,9 +35,9 @@
                     <input type="text" id="blackAgent" value="QwazyQwen" placeholder="Agent ID">
                     <select id="blackPersonality">
                         <option value="aggressive">Aggressive</option>
-                        <option value="defensive" selected>Defensive</option>
+                        <option value="defensive">Defensive</option>
                         <option value="balanced">Balanced</option>
-                        <option value="tactical">Tactical</option>
+                        <option value="tactical" selected>Tactical</option>
                         <option value="positional">Positional</option>
                     </select>
                 </div>
@@ -86,10 +86,6 @@
                             <strong>Status:</strong> <span id="commentaryStatus" class="status-stopped">Disabled</span>
                         </div>
                     </div>
-                    <div class="commentary-transcript">
-                        <strong>Transcript:</strong>
-                        <div id="commentaryTranscript" class="transcript-text">No commentary yet</div>
-                    </div>
                 </div>
             </div>
 
@@ -101,6 +97,12 @@
                 </div>
                 <div class="board-info">
                     <p id="boardFen"></p>
+                </div>
+                
+                <!-- Commentary Transcript -->
+                <div class="commentary-transcript-display">
+                    <h3>🎙️ Live Commentary</h3>
+                    <div id="commentaryTranscript" class="transcript-text">No commentary yet</div>
                 </div>
             </div>
 

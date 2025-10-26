@@ -178,9 +178,11 @@ async function startNewGame() {
         
         const whiteAgent = document.getElementById('whiteAgent').value;
         const blackAgent = document.getElementById('blackAgent').value;
+        const whitePersonality = document.getElementById('whitePersonality').value;
+        const blackPersonality = document.getElementById('blackPersonality').value;
         const useLLM = document.getElementById('useLLM').checked;
         
-        console.log('Game config:', { whiteAgent, blackAgent, useLLM });
+        console.log('Game config:', { whiteAgent, blackAgent, whitePersonality, blackPersonality, useLLM });
         
         // Reset game
         const resetResponse = await fetch(`${API_BASE}/reset`, {
@@ -188,7 +190,9 @@ async function startNewGame() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 white_agent_id: whiteAgent,
-                black_agent_id: blackAgent
+                black_agent_id: blackAgent,
+                white_personality: whitePersonality,
+                black_personality: blackPersonality
             })
         });
         

@@ -3,6 +3,9 @@
 Provides REST API endpoints for the chess environment following OpenEnv spec.
 """
 
+from dotenv import load_dotenv
+load_dotenv(override=True)  # Override shell environment variables with .env file
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse

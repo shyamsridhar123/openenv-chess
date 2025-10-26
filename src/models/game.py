@@ -40,6 +40,8 @@ class Game:
         result: Game result (1-0, 0-1, 1/2-1/2, or *)
         white_agent_id: ID of white agent
         black_agent_id: ID of black agent
+        white_personality: Personality of white agent (aggressive/defensive/balanced/tactical/positional)
+        black_personality: Personality of black agent (aggressive/defensive/balanced/tactical/positional)
         created_at: When the game was created
         updated_at: When the game was last updated
         completed_at: When the game finished (if completed)
@@ -50,13 +52,15 @@ class Game:
     
     game_id: str
     board_state: BoardState
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
     move_history: List[Move] = field(default_factory=list)
     status: GameStatus = GameStatus.ACTIVE
     result: GameResult = GameResult.ONGOING
     white_agent_id: str = "white"
     black_agent_id: str = "black"
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
+    white_personality: str = "balanced"
+    black_personality: str = "balanced"
     completed_at: Optional[datetime] = None
     total_moves: int = 0
     time_control: Optional[dict] = None

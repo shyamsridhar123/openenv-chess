@@ -32,8 +32,10 @@ def get_state_manager():
 class ResetRequest(BaseModel):
     """Request body for /reset endpoint."""
     fen: Optional[str] = Field(None, description="Optional FEN string for custom starting position")
-    white_agent_id: str = Field("white", description="White agent identifier")
-    black_agent_id: str = Field("black", description="Black agent identifier")
+    white_agent_id: str = Field("aggressive_white", description="White agent identifier")
+    black_agent_id: str = Field("tactical_black", description="Black agent identifier")
+    white_personality: str = Field("balanced", description="White agent personality (aggressive/defensive/balanced/tactical/positional)")
+    black_personality: str = Field("balanced", description="Black agent personality (aggressive/defensive/balanced/tactical/positional)")
     game_id: Optional[str] = Field(None, description="Optional game ID (generated if not provided)")
 
 
@@ -81,10 +83,19 @@ async def reset_environment(request: ResetRequest):
         env = ChessOpenEnv(game_id=game_id)
         
         # Reset environment
+        logger.info(
+            "reset_request_received",
+            white_agent=request.white_agent_id,
+            black_agent=request.black_agent_id,
+            white_personality=request.white_personality,
+            black_personality=request.black_personality,
+        )
         observation, info = env.reset(
             fen=request.fen,
             white_agent_id=request.white_agent_id,
             black_agent_id=request.black_agent_id,
+            white_personality=request.white_personality,
+            black_personality=request.black_personality,
         )
         
         # Store game in state manager
@@ -95,6 +106,8 @@ async def reset_environment(request: ResetRequest):
             game_id=game_id,
             white_agent=request.white_agent_id,
             black_agent=request.black_agent_id,
+            white_personality=request.white_personality,
+            black_personality=request.black_personality,
             custom_fen=request.fen is not None,
         )
         
@@ -332,12 +345,18 @@ async def agent_move(request: AgentMoveRequest):
         current_player = 'white' if env.chess.board.turn else 'black'
         agent_id = game.white_agent_id if current_player == 'white' else game.black_agent_id
         
-        # Get agent personality from agent ID
-        personality = 'balanced'
-        for p in ['aggressive', 'defensive', 'tactical', 'positional']:
-            if p in agent_id.lower():
-                personality = p
-                break
+        # Get agent personality from game (not from agent_id string)
+        personality = game.white_personality if current_player == 'white' else game.black_personality
+        
+        logger.info(
+            "agent_move_personality_check",
+            game_id=request.game_id,
+            agent_id=agent_id,
+            current_player=current_player,
+            personality_from_game=personality,
+            white_personality_stored=game.white_personality,
+            black_personality_stored=game.black_personality,
+        )
         
         # Import dependencies
         from src.agents.agent_manager import ChessAgentManager
@@ -388,7 +407,7 @@ async def agent_move(request: AgentMoveRequest):
                     game_id=request.game_id,
                     terminated=result['terminated'])
         
-        return {
+        response = {
             "game_id": request.game_id,
             "observation": result['observation'],
             "reward": result['reward'],
@@ -398,6 +417,12 @@ async def agent_move(request: AgentMoveRequest):
             "agent_id": agent_id,
             "personality": personality
         }
+        
+        # Add evaluation if available
+        if 'evaluation' in result:
+            response['evaluation'] = result['evaluation']
+        
+        return response
         
     except Exception as e:
         logger.error("agent_move_failed",
@@ -625,14 +650,25 @@ Move: {san_move}
 Move number: {move_number or 1}
 Game phase: {game_phase}
 
-Generate energetic, insightful commentary in 2-3 sentences about this move:
-1. What the move accomplishes (development, central control, attacking, defending)
+Generate analytical, grandmaster-level commentary in 2-3 sentences about this move:
+1. What the move accomplishes (development, central control, space, piece activity)
 2. The strategic or tactical idea behind it
-3. How it fits into the current game plan
+3. How it fits into the opening/middlegame plan
 
-Be enthusiastic like a sports commentator! Focus on what makes this move interesting or important in the position. Use phrases like "Excellent choice!", "Solid play!", "Building pressure!", "Developing with purpose!"
+CRITICAL: Be analytical and objective, NOT sycophantic. Describe what the move does, not praise it.
 
-Keep it short and exciting - maximum 3 sentences!"""
+❌ FORBIDDEN PHRASES - NEVER USE:
+- "Excellent choice" / "Great move" / "Perfect" / "Brilliant"
+- "Solid play" / "Good decision" / "Nice"
+- "Building pressure" (unless explaining HOW)
+- "Developing with purpose" (just say WHAT develops)
+
+✓ GOOD APPROACH:
+- "{san_move} develops the knight to its natural square, controlling the center"
+- "The bishop fianchetto prepares kingside castling"
+- "{san_move} challenges the center and opens lines for the pieces"
+
+Keep it analytical and concise - maximum 3 sentences!"""
             
             logger.debug("using_simple_prompt_no_evaluation", 
                         san_move=san_move,
@@ -645,11 +681,11 @@ Keep it short and exciting - maximum 3 sentences!"""
             except Exception as e:
                 logger.warning("prompt_build_failed", error=str(e))
                 # Fallback to simple prompt
-                prompt = f"""You are an enthusiastic chess commentator. 
+                prompt = f"""You are an analytical chess grandmaster providing commentary.
 
-{player.capitalize()} plays {san_move}!
+{player.capitalize()} plays {san_move}.
 
-Generate exciting 2-3 sentence commentary about this move. Be energetic and knowledgeable like a grandmaster chess commentator!"""
+Generate analytical 2-3 sentence commentary about this move. Be objective and insightful - describe what the move accomplishes, not whether it's "good" or "excellent". Focus on the chess ideas."""
         
         logger.debug("commentary_prompt_built", 
                     trigger=trigger_enum.value,

@@ -24,6 +24,9 @@ class CommentaryTrigger(Enum):
     CHECKMATE = "checkmate"                # Game ending in checkmate
     CRITICAL_MISTAKE = "critical_mistake"  # Move that loses winning position
     
+    # Medium-high priority - strategic overview
+    STRATEGIC_OVERVIEW = "strategic_overview"  # Broad positional analysis (not move-specific)
+    
     # Medium priority - generate if conditions met
     TACTICAL = "tactical"                  # Fork, pin, skewer detected
     SACRIFICE = "sacrifice"                # Material sacrifice for position
@@ -34,6 +37,9 @@ class CommentaryTrigger(Enum):
     OPENING_NOVELTY = "opening_novelty"    # Unusual opening move
     ENDGAME_TECHNIQUE = "endgame"          # Clean endgame execution
     POSITIONAL_MASTERCLASS = "positional"  # Superior positional play
+    
+    # Special triggers
+    NONE = "none"                          # No commentary needed
     
     # Game state triggers
     GAME_START = "game_start"              # Game beginning

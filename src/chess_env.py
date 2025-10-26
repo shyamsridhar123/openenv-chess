@@ -7,10 +7,13 @@ following patterns from openenv/openspiel_env.
 from typing import Dict, Any, Optional, Tuple
 import uuid
 import chess
+import structlog
 
 from src.chess_logic import ChessLogic
 from src.models.board_state import BoardState
 from src.models.game import Game, GameStatus, GameResult
+
+logger = structlog.get_logger(__name__)
 
 
 class ChessOpenEnv:
@@ -52,11 +55,21 @@ class ChessOpenEnv:
         board_state = self.chess.reset(fen)
         
         # Create new game
+        white_personality = kwargs.get("white_personality", "balanced")
+        black_personality = kwargs.get("black_personality", "balanced")
+        logger.info(
+            "game_object_created",
+            game_id=self.game_id,
+            white_personality=white_personality,
+            black_personality=black_personality,
+        )
         self.game = Game(
             game_id=self.game_id,
             board_state=board_state,
             white_agent_id=kwargs.get("white_agent_id", "white"),
             black_agent_id=kwargs.get("black_agent_id", "black"),
+            white_personality=white_personality,
+            black_personality=black_personality,
         )
         
         self._move_count = 0

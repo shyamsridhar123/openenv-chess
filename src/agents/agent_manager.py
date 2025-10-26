@@ -95,14 +95,21 @@ class ChessAgentManager:
             # Create model
             model = InferenceClientModel(model_id=model_name)
             
-            # Get system prompt
+            # Get system prompt for this personality (will be prepended to prompts)
             system_prompt = self.SYSTEM_PROMPTS.get(personality, self.SYSTEM_PROMPTS["balanced"])
             
-            # Create agent
+            logger.info(
+                "creating_agent_with_personality",
+                agent_id=agent_id,
+                personality=personality,
+                system_prompt_preview=system_prompt[:100] + "...",
+            )
+            
+            # Create agent with chess and chess.engine imports
             agent = CodeAgent(
                 tools=[],
                 model=model,
-                additional_authorized_imports=["chess"],
+                additional_authorized_imports=["chess", "chess.engine"],
             )
             
             self.agents[agent_id] = agent
@@ -200,6 +207,132 @@ class ChessAgentManager:
             max_retries=config.max_retries,
         )
         raise ValueError(f"Agent {agent_id} failed to generate valid move after {config.max_retries} attempts")
+    
+    def get_agent_move_with_candidates(
+        self,
+        agent_id: str,
+        board_state: BoardState,
+        candidates: List[str],
+        candidate_info: Optional[List[Dict[str, Any]]] = None,
+        game_history: Optional[List[str]] = None,
+    ) -> str:
+        """Get move from agent constrained to specific candidate moves.
+        
+        Used by hybrid agent architecture to constrain LLM selection to
+        tactically sound Stockfish candidates.
+        
+        Args:
+            agent_id: Agent identifier
+            board_state: Current board state
+            candidates: List of candidate moves in UCI notation
+            candidate_info: Optional list of dicts with score, pv_line for each candidate
+            game_history: Optional game history for context
+            
+        Returns:
+            Move in UCI notation (guaranteed to be from candidates list)
+        """
+        agent = self.agents.get(agent_id)
+        if not agent:
+            raise ValueError(f"Agent {agent_id} not found")
+        
+        config = self.configs[agent_id]
+        
+        # Build prompt with candidate information
+        prompt = self._build_candidate_constrained_prompt(
+            board_state=board_state,
+            candidates=candidates,
+            candidate_info=candidate_info,
+            game_history=game_history,
+            personality=config.personality,
+        )
+        
+        # Try with retries
+        for attempt in range(config.max_retries):
+            try:
+                result = agent.run(prompt)
+                move = self._extract_move(result, candidates)
+                
+                if move and move in candidates:
+                    logger.info(
+                        "candidate_constrained_move_success",
+                        agent_id=agent_id,
+                        move=move,
+                        attempt=attempt + 1,
+                    )
+                    return move
+                
+                logger.warning(
+                    "agent_selected_non_candidate",
+                    agent_id=agent_id,
+                    attempt=attempt + 1,
+                    selected=move,
+                )
+                
+            except Exception as e:
+                logger.warning(
+                    "candidate_selection_error",
+                    agent_id=agent_id,
+                    attempt=attempt + 1,
+                    error=str(e),
+                )
+        
+        # Fallback: return top candidate if agent fails
+        fallback_move = candidates[0]
+        logger.warning(
+            "using_top_candidate_fallback",
+            agent_id=agent_id,
+            move=fallback_move,
+        )
+        return fallback_move
+    
+    def _build_candidate_constrained_prompt(
+        self,
+        board_state: BoardState,
+        candidates: List[str],
+        candidate_info: Optional[List[Dict[str, Any]]],
+        game_history: Optional[List[str]],
+        personality: str,
+    ) -> str:
+        """Build prompt for candidate-constrained move selection."""
+        system_prompt = self.SYSTEM_PROMPTS.get(personality, self.SYSTEM_PROMPTS["balanced"])
+        
+        prompt = f"""{system_prompt}
+
+=== CANDIDATE MOVE SELECTION ===
+
+You MUST select one of the following candidate moves (these are tactically sound options):
+
+"""
+        
+        # Add candidate information
+        if candidate_info:
+            for i, (move, info) in enumerate(zip(candidates, candidate_info), 1):
+                prompt += f"**Candidate {i}**: {move}\n"
+                if "score" in info:
+                    score = info["score"]
+                    score_str = f"{score:+d}cp" if abs(score) < 10000 else "Mate"
+                    prompt += f"  Evaluation: {score_str}\n"
+                if "pv_line" in info and info["pv_line"]:
+                    pv = " ".join(info["pv_line"][:5])
+                    prompt += f"  Continuation: {pv}\n"
+                prompt += "\n"
+        else:
+            prompt += ", ".join(candidates) + "\n\n"
+        
+        prompt += f"""
+=== CURRENT POSITION ===
+FEN: {board_state.fen}
+You are: {board_state.current_player.upper()}
+"""
+        
+        if game_history:
+            recent = game_history[-6:] if len(game_history) > 6 else game_history
+            prompt += f"Recent moves: {' '.join(recent)}\n"
+        
+        prompt += "\nSelect the BEST candidate move that matches your " + personality + " style.\n"
+        prompt += "Respond with ONLY the move in UCI notation.\n\nYour move:"
+        
+        return prompt
     
     def _build_move_prompt(
         self,

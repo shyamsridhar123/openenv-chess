@@ -116,15 +116,15 @@ As a viewer of chess games, I need commentary that identifies and explains strat
 **Hybrid Agent Architecture:**
 
 - **FR-001**: System MUST query Stockfish for top N candidate moves (configurable, default 5) before agent decision-making
-- **FR-002**: System MUST include move evaluations (centipawn scores) for each candidate move
-- **FR-003**: Agent move selection MUST be constrained to Stockfish's candidate moves (no moves outside top N allowed)
+- **FR-002**: System MUST include move evaluations (centipawn scores) and Principal Variation (PV) lines for each candidate move
+- **FR-003**: Agent move selection MUST be constrained to Stockfish's candidate moves (hybrid architecture replaces LLM-only flow entirely)
 - **FR-004**: System MUST adapt candidate move selection based on agent personality (aggressive agents see attacking candidates emphasized, defensive agents see safe candidates)
 - **FR-005**: System MUST provide fallback to traditional LLM-only move generation when Stockfish is unavailable
 - **FR-006**: System MUST log all fallback events with reasons (Stockfish unavailable, timeout, error)
 
 **Opening Book Integration:**
 
-- **FR-007**: System MUST query opening book database before hybrid agent move generation in opening phase (first 20 moves)
+- **FR-007**: System MUST query opening book database before hybrid agent move generation in opening phase (up to move 15)
 - **FR-008**: Opening book MUST support personality-based move filtering (aggressive personalities prefer sharp lines, defensive prefer solid lines)
 - **FR-009**: System MUST transition seamlessly to hybrid agent when position is not in opening book
 - **FR-010**: Opening book moves MUST bypass LLM API calls (direct move return)
@@ -138,7 +138,7 @@ As a viewer of chess games, I need commentary that identifies and explains strat
 - **FR-015**: Tablebase moves MUST bypass both Stockfish candidate generation and LLM decision-making
 - **FR-016**: System MUST use Lichess Tablebase API or equivalent as data source
 - **FR-017**: System MUST fall back to hybrid agent generation when tablebase is unavailable or position not found
-- **FR-018**: System MUST cache tablebase results to reduce API calls for repeated positions
+- **FR-018**: System MUST cache tablebase results per game session to reduce API calls for repeated positions
 
 **Enhanced Commentary Prompts:**
 
@@ -159,7 +159,7 @@ As a viewer of chess games, I need commentary that identifies and explains strat
 - **FR-030**: System MUST analyze positions for rooks on 7th rank (opponent's 2nd rank)
 - **FR-031**: System MUST analyze positions for space advantages (central square control)
 - **FR-032**: System MUST analyze positions for king safety issues (exposed king, pawn storm, back rank weakness)
-- **FR-033**: Strategic themes MUST be included in commentary prompts when detected
+- **FR-033**: Strategic themes MUST be included in commentary prompts when detected (report all themes, let commentary generation prioritize)
 - **FR-034**: System MUST handle positions with no significant strategic themes without failing
 
 ### Key Entities
@@ -230,3 +230,27 @@ As a viewer of chess games, I need commentary that identifies and explains strat
 - Commentary personalization based on viewer expertise level
 - Multi-language commentary support
 - Real-time commentary streaming optimization
+
+## Clarifications
+
+### Session 2025-10-25
+
+**Q1: Integration Strategy**  
+**Question**: Should the hybrid agent architecture replace the current LLM-only flow entirely, or should it supplement it (e.g., Stockfish as an optional enhancement)?  
+**Answer**: Replace current flow - All agents become hybrid agents by default. This ensures consistent tactical quality across all personalities.
+
+**Q2: PV Line Extraction**  
+**Question**: How should PV (Principal Variation) lines be extracted from Stockfish for commentary?  
+**Answer**: Enhance `get_top_moves()` method to return `List[Tuple[Move, score, PV_line]]` where PV_line is the continuation sequence.
+
+**Q3: Opening Book Cutoff**  
+**Question**: At what move number should the system stop consulting the opening book and transition to hybrid agent generation?  
+**Answer**: Move 15 (aligns with success criteria SC-005 which measures first 15 moves).
+
+**Q4: Theme Detection Threshold**  
+**Question**: Should strategic theme detection report ALL detected themes or only the most significant ones (threshold-based)?  
+**Answer**: Report all detected themes. Let commentary generation decide which to emphasize based on context.
+
+**Q5: Tablebase Cache Duration**  
+**Question**: How long should tablebase results be cached?  
+**Answer**: Cache for game session only (prevents stale data across games, reduces repeated API calls within a single game).
